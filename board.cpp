@@ -28,6 +28,8 @@ Board *Board::copy() {
     return newBoard;
 }
 
+
+
 bool Board::occupied(int x, int y) {
     return taken[x + 8*y];
 }
