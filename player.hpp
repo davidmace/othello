@@ -2,6 +2,7 @@
 #define __PLAYER_H__
 
 #include <iostream>
+#include <tuple>
 #include "common.hpp"
 #include "board.hpp"
 using namespace std;
@@ -12,6 +13,9 @@ public:
     Player(Side side);
     ~Player();
 
+    void setBoard(Board *board_param);
+    std::tuple<Move*, int> explore_move(Board *board, 
+        int depth, Side side);
     Move *doMove(Move *opponentsMove, int msLeft);
 
     // Flag to tell if the player is running within the test_minimax context

@@ -1,1 +1,1 @@
-hi
+Here is David Mace's CS2 othello.
