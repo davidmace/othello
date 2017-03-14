@@ -70,6 +70,23 @@ bool Board::hasMoves(Side side) {
 }
 
 /*
+ * Returns the total weighted score for this board and player.
+ */
+int Board::weighted_board_score(Side side) {
+    Side other_side = (side == BLACK) ? WHITE : BLACK;
+    int total = 0;
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            if( get(side, x, y) )
+                total += position_values[y][x];
+            else if( get(other_side, x, y) )
+                total -= position_values[y][x];
+        }
+    }
+    return total;
+}
+
+/*
  * Returns true if a move is legal for the given side; false otherwise.
  */
 bool Board::checkMove(Move *m, Side side) {

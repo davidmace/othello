@@ -1,1 +1,14 @@
 Here is David Mace's CS2 othello.
+
+I'll skip the first question since I was the only person on my team.
+
+I spent half of this week fixing bugs in my minimax from last week. I ended up rewriting it to be more concise. 
+
+I added a better evaluation function. Instead of the board score, I use a weighted board score where some positions are a disadvantage to occupy (next to corner) and others are a huge advantage to occupy (corners). To calculate this, I sum up all of the weighted values for spots occupied by me and subtract the summed position values for spots occupied by the other player. I noticed that after this addition, my AI now plays from behind (by the score of token differential) for most of the game to maintain a few key positions then rapidly gains tokens in the last 10 moves. My position values came from http://www.samsoft.org.uk/reversi/strategy.htm . This strategy is likely to work well because holding strategic positions is more important for the late game than holding lots of unstable tokens.
+
+I experimented with adding a measure of "mobility" to my evaluation function to prefer moves that led my AI to have more move options while limiting the number of moves the opposing AI could make. My mobility function was the number of moves my AI could make minus the number of moves the opposing AI could make at the given board position. However, I could't find a good linear weighting of this and my weighted position evaluation function, so I didn't include it in the final algorithm. I thought this would work well because: an AI is really good at the end game especially so the goal early in the game should be to set up the end-game AI with as many possible paths as possible then it can explore this large variety of outcomes.
+
+I wrote out the code for alpha-beta pruning, but there's an error in it that causes a reduction in my algorithm's success. Because of this, I commented out the alpha-beta pruning break condition.
+
+I also experimented with running a large number of simulations and calculating how frequently playing in each of the positions on the board affected winning chances with a 3-depth minimax strategy against a 3-depth
+minimax strategy with slight randomization. The calculated position values worked less well than just the simple position value mentioned earlier. I thought this would work well because the board score is important for occupying the most stable positions on the board so the AI has good options in the end-game to reclaim tokens. A problem with this method is that the position moved to is different than the position occupied. Although a position occupied might be important, it's possible that moving in this space isn't a good strategy for maintaining it in the longer-run.

@@ -47,7 +47,7 @@ void Player::setBoard(Board *board_param)
  * return nullptr.
  */
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
-    
+    std::cerr << msLeft << "\n";
     // update the board with the opponent's move
     if (myside == BLACK)
         board->doMove(opponentsMove, WHITE);
@@ -57,14 +57,28 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // find the best move
     Move *move;
     int score;
-    //std::cerr << "yo\n";
-    std::tie(move, score) = explore_move(board, 0, myside);
+    std::tie(move, score) = explore_move(board, 3, 
+        myside, -10000000, 10000000);
+    ////move = nullptr;
 
     // make the move
-    //std::cerr << move << "\n";
     board->doMove(move, myside);
     return move;
 }
+
+
+
+/**
+  * Calculate the token differential board score.
+  */
+int Player::board_score(Board *board, Side side)
+{
+    if (side == BLACK)
+        return board->countBlack() - board->countWhite();
+    
+    return board->countWhite() - board->countBlack();
+}
+
 
 /**
   * Helper function to explore the subtree from this board.
@@ -74,35 +88,43 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
   * @returns a tuple of the chosen best move and score of the move
   */
 std::tuple<Move*, int> Player::explore_move(Board *board, 
-    int depth, Side side)
+    int depth, Side side, int alpha, int beta)
 {
 
-    // leaf case
-    if ( board->isDone() || 
-        (testingMinimax == true && depth == 2) ||
-        (testingMinimax == false && depth == 3) )
+    // leaf case end game
+    if ( board->isDone() )
     {
-        // use coin differential
-        // note this is the player's side, not the exploring side
-        if (myside == BLACK)
-        {
-            int score = board->countBlack() - board->countWhite();
-            return std::make_tuple(nullptr, score);
-        }
+        if (board_score(board, side) > 0)
+            return std::make_tuple(nullptr, 10000);
         else
-        {
-            int score = board->countWhite() - board->countBlack();
-            return std::make_tuple(nullptr, score);
-        }
+            return std::make_tuple(nullptr, -10000);
+        return std::make_tuple(nullptr, 0);
     }
 
-    // for intermediate cases, loop all move possibilities
+
+    // leaf case end of traversal
+    if (depth == 0)
+        return std::make_tuple(nullptr, 
+            board->weighted_board_score(side));
+
+
+    // transition cases
+    int best_score = -100000;
     Move *best_move = nullptr;
-    int best_score = (depth % 2 == 0) ? -100 : 100;
+    bool done = false;
     for (int x = 0; x < 8; x++)
     {
+        if (done)
+            break;
+
         for (int y = 0; y < 8; y++)
         {
+            //if (beta <= alpha)
+            //{
+            //    done = true;
+            //    break;
+            //}
+
             Move *move = new Move(x, y);
 
             // check if move is legal
@@ -111,58 +133,32 @@ std::tuple<Move*, int> Player::explore_move(Board *board,
                 Board *new_board = board->copy();
                 new_board->doMove(move, side);
                 
-                Side next_side = (side == BLACK) ? WHITE : BLACK;
+                // explore the subtree
+                Side other_side = (side == BLACK) ? WHITE : BLACK;
                 Move *chosen_move;
                 int score;
                 std::tie(chosen_move, score) = explore_move(new_board, 
-                    depth + 1, next_side);
-                //std::cerr << depth << " " << move->x << " " << move->y << " " << score << "\n";
-
-                // get the max score if player is proponent
-                if (side == myside && score > best_score)
+                    depth - 1, other_side, -beta, -alpha);
+                score = -score;
+                //std::cerr << depth << "explored" << score << " \n";
+                
+                // if this is the best move we have seen, store it
+                //if (score > alpha)
+                if  (score > best_score)
                 {
-                    best_move = move;
                     best_score = score;
-                }
-                // get the min score if player is opponent
-                else if (side != myside && score < best_score)
-                {
                     best_move = move;
-                    best_score = score;
+                    alpha = score;
                 }
-                free(new_board);
-
             }
         }
     }
 
-    // explore the pass case if no move is found
+
+    // pass case
     if (best_move == nullptr)
-    {
-        Board *new_board = board->copy();
-        Side next_side = (side == BLACK) ? WHITE : BLACK;
-        Move *chosen_move;
-        int score;
-        std::tie(chosen_move, score) = explore_move(new_board, 
-            depth + 1, next_side);
+        return std::make_tuple(nullptr, board_score(board, side));
 
-        // get the max score if player is proponent
-        if (side == myside && score > best_score)
-        {
-            best_move = nullptr;
-            best_score = score;
-        }
-        // get the min score if player is opponent
-        else if (side != myside && score < best_score)
-        {
-            best_move = nullptr;
-            best_score = score;
-        }
-        free(new_board);
-    }
-
-    // return the pair of move and score for that move
     return std::make_tuple(best_move, best_score);
-    
 }
 
